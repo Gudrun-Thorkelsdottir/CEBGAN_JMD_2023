@@ -11,6 +11,7 @@ from utils.dataloader import AirfoilDataset, NoiseGenerator
 from utils.shape_plot import plot_samples, plot_comparision
 from torchvision.transforms import Normalize
 from utils.metrics import ci_cons, ci_mll, ci_rsmth, ci_rdiv, ci_mmd
+from time import process_time
 
 
 def read_configs(name, base_dir="./"):
@@ -34,18 +35,27 @@ if __name__ == '__main__':
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 
     batch = 32
-    epochs = 5000
-    save_intvl = 1000
+    epochs = 5
+    save_intvl = 5
 
     dis_cfg, gen_cfg, cbgan_cfg, cz, noise_type = read_configs('cbgan')
     save_dir = '../saves/final'
     os.makedirs(save_dir, exist_ok=True)
     os.makedirs(os.path.join(save_dir, 'runs'), exist_ok=True)
 
-    airfoils_opt = np.load('../data/airfoils_opt_995.npy').astype(np.float32)
-    inp_paras = np.load('../data/inp_paras_995.npy').astype(np.float32)
-    aoas_opt = np.load('../data/aoas_opt_995.npy').astype(np.float32).reshape(-1, 1)
+    airfoils_opt = np.load('../data/project_data/train/airfoils_opt_train.npy').astype(np.float32)
+    inp_paras = np.load('../data/project_data/train/inp_paras_train.npy').astype(np.float32)
+    aoas_opt = np.load('../data/project_data/train/aoas_opt_train.npy').astype(np.float32).reshape(-1, 1)
     mean_std = (inp_paras.mean(0), inp_paras.std(0))
+
+    val_airfoils_opt = np.load('../data/project_data/val/airfoils_opt_val.npy').astype(np.float32)
+    val_inp_paras = np.load('../data/project_data/val/inp_paras_val.npy').astype(np.float32)
+    val_aoas_opt = np.load('../data/project_data/val/aoas_opt_val.npy').astype(np.float32).reshape(-1, 1)
+    val_mean_std = (val_inp_paras.mean(0), val_inp_paras.std(0))
+
+
+    airfoils_opt = airfoils_opt.transpose(0,2,1)
+    val_airfoils_opt = val_airfoils_opt.transpose(0,2,1)
 
     save_iter_list = list(np.linspace(1, epochs/save_intvl, dtype=int) * save_intvl - 1)
     
@@ -56,7 +66,9 @@ if __name__ == '__main__':
 
     # build dataloader and noise generator on the device specified
     dataset = AirfoilDataset(inp_paras, airfoils_opt, aoas_opt, inp_mean_std=mean_std, device=device)
+    val_dataset = AirfoilDataset(val_inp_paras, val_airfoils_opt, val_aoas_opt, inp_mean_std=val_mean_std, device=device)
     dataloader = DataLoader(dataset, batch_size=batch, shuffle=True, drop_last=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch, shuffle=True, drop_last=True)
     noise_gen = NoiseGenerator(batch, sizes=cz, noise_type=noise_type, device=device) # all Gaussian noise
 
     # build tensorboard summary writer
@@ -78,11 +90,14 @@ if __name__ == '__main__':
                 fname=os.path.join(tb_dir, 'images', 'epoch {}'.format(epoch+1))
                 )
 
+    start = process_time()
+
     cbgan.train(
         epochs=epochs,
         num_iter_D=1, 
         num_iter_G=1,
         dataloader=dataloader, 
+        val_dataloader=val_dataloader,
         noise_gen=noise_gen, 
         tb_writer=writer,
         report_interval=1,
@@ -90,3 +105,5 @@ if __name__ == '__main__':
         save_iter_list=save_iter_list,
         plotting=epoch_plot
         )
+
+    print(str(process_time() - start) + " seconds")

@@ -6,9 +6,10 @@ from models.cgans import AirfoilAoAGenerator
 from train_final_cbgan import read_configs
 from utils.shape_plot import plot_samples, plot_grid, plot_comparision
 from utils.dataloader import NoiseGenerator
+from datetime import datetime
 
 def load_generator(gen_cfg, save_dir, checkpoint, device='cpu'):
-    ckp = torch.load(os.path.join(save_dir, checkpoint), map_location='cuda:0')
+    ckp = torch.load(os.path.join(save_dir, checkpoint), map_location=device)
     generator = AirfoilAoAGenerator(**gen_cfg).to(device)
     generator.load_state_dict(ckp['generator'])
     generator.eval()
@@ -20,11 +21,11 @@ if __name__ == '__main__':
     save_dir = '../saves/final/'
     _, gen_cfg, _, cz, _ = read_configs('cbgan')
 
-    epoch = 5000
+    epoch = 5
 
-    inp_paras = np.load('../data/inp_paras_995.npy')
+    inp_paras = np.load('../data/project_data/train/inp_paras_train.npy')
     mean, std = inp_paras.mean(0), inp_paras.std(0)
-    inp_paras = np.load('../data/inp_paras_347.npy') # reload inp_paras from Jun's test set.
+    inp_paras = np.load('../data/project_data/test/inp_paras_test.npy') # reload inp_paras from Jun's test set.
     tr_inp_paras = (inp_paras - mean) / std
 
 
@@ -40,6 +41,21 @@ if __name__ == '__main__':
     np.save('../data/pred_cbgan/single/new/aoas_pred.npy', aoas[0])
     np.save('../data/pred_cbgan/single/new/airfoils_pred.npy', samples[0])
     np.save('../data/pred_cbgan/single/new/inp_params_pred.npy', params.cpu().detach().numpy())
+
+    test_airfoils = np.load('../data/project_data/test/airfoils_opt_test.npy')
+    test_aoas = np.load('../data/project_data/test/aoas_opt_test.npy')
+
+    time = datetime.now().strftime('%b%d_%H-%M-%S')
+    tb_dir = os.path.join(save_dir, 'runs')
+
+    test_airfoils = test_airfoils.transpose(0,2,1)
+    airfoils_pred = samples[0]
+    #test_aoas = test_aoas.reshape(test_aoas.shape[0], 1)
+    aoas_pred = aoas[0].reshape(aoas[0].shape[0])
+
+    plot_comparision(None, test_airfoils, [airfoils_pred], test_aoas, aoas_pred, scale=1.0, scatter=False, symm_axis=None,fname=os.path.join(tb_dir, 'comparison_plot'))
+
+
 
     # num_trials = 10
     # for _ in range(num_trials):

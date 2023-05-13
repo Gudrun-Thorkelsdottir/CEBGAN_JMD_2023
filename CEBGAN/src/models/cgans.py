@@ -132,18 +132,19 @@ class CBGAN(BezierGAN):
         return self.generator(noise, inp_paras)
 
     def train(
-        self, dataloader, noise_gen, epochs, num_iter_D=5, num_iter_G=1, report_interval=5,
+        self, dataloader, val_dataloader, noise_gen, epochs, num_iter_D=5, num_iter_G=1, report_interval=5,
         save_dir=None, save_iter_list=[100,], tb_writer=None, **kwargs
         ):
         for epoch in range(epochs):
+            print(epoch)
             self._epoch_hook(epoch, epochs, noise_gen, tb_writer, **kwargs)
-            for i, (dp, aoa, inp_paras) in enumerate(dataloader):
+            for i, ((dp, aoa, inp_paras), (val_dp, val_aoa, val_inp_paras)) in enumerate(zip(dataloader, val_dataloader)):
                 #self._batch_hook(i, batch, noise_gen, tb_writer, **kwargs)
                 self._update_D(num_iter_D, dp, aoa, inp_paras, noise_gen, **kwargs)
                 #if not self._train_gen_criterion(batch, noise_gen, epoch): continue
                 self._update_G(num_iter_G, dp, aoa, inp_paras, noise_gen, **kwargs)
                 #self._batch_report(i, dp, aoa, noise_gen, tb_writer, **kwargs)
-            self._epoch_report(epoch, epochs, dp, aoa, inp_paras, noise_gen, report_interval, tb_writer, **kwargs)
+            self._epoch_report(epoch, epochs, dp, aoa, inp_paras, val_dp, val_aoa, val_inp_paras, noise_gen, report_interval, tb_writer, **kwargs)
 
             if save_dir:
                 if save_iter_list and epoch in save_iter_list:
@@ -189,16 +190,21 @@ class CBGAN(BezierGAN):
             torch.ones(len(fake_dp), 1, device=fake_dp.device)
             )
 
-    def _epoch_report(self, epoch, epochs, real_dp, real_aoa, inp_paras,
+    def _epoch_report(self, epoch, epochs, real_dp, real_aoa, inp_paras, val_dp, val_aoa, val_inp_paras, 
                       noise_gen, report_interval, tb_writer, **kwargs):
         if epoch % report_interval == 0:
             noise = noise_gen(); latent_code = noise[:, :noise_gen.sizes[0]]
             (fake_dp, fake_aoa), cp, w, pv, intvls = self.generator(noise, inp_paras)
             js_loss = self.js_loss_D(real_dp, real_aoa, fake_dp, fake_aoa, inp_paras)
             reg_loss = self.regularizer(cp, w, pv, intvls)
+            (val_fake_dp, val_fake_aoa), val_cp, val_w, val_pv, val_intvls = self.generator(noise, val_inp_paras)
+            val_js_loss = self.js_loss_D(val_dp, val_aoa, val_fake_dp, val_fake_aoa, val_inp_paras)
+            val_reg_loss = self.regularizer(val_cp, val_w, val_pv, val_intvls)
             if tb_writer:
-                tb_writer.add_scalar('JS Loss', js_loss, epoch)
-                tb_writer.add_scalar('Regularization Loss', reg_loss, epoch)
+                tb_writer.add_scalar('Train/JS Loss', js_loss, epoch)
+                tb_writer.add_scalar('Train/Regularization Loss', reg_loss, epoch)
+                tb_writer.add_scalar('Validation/JS Loss', val_js_loss, epoch)
+                tb_writer.add_scalar('Validation/Regularization Loss', val_reg_loss, epoch)
             else:
                 print('[Epoch {}/{}] JS loss: {:d}, Regularization loss: {:d}'.format(
                     epoch, epochs,  js_loss, reg_loss))
