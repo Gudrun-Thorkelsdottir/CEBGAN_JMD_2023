@@ -43,14 +43,14 @@ if __name__ == '__main__':
     os.makedirs(save_dir, exist_ok=True)
     os.makedirs(os.path.join(save_dir, 'runs'), exist_ok=True)
 
-    airfoils_opt = np.load('../data/project_data/train/airfoils_opt_train.npy').astype(np.float32)
-    inp_paras = np.load('../data/project_data/train/inp_paras_train.npy').astype(np.float32)
-    aoas_opt = np.load('../data/project_data/train/aoas_opt_train.npy').astype(np.float32).reshape(-1, 1)
+    airfoils_opt = np.load('../data/project_data/airfoils_opt_train.npy').astype(np.float32)
+    inp_paras = np.load('../data/project_data/inp_paras_train.npy').astype(np.float32)
+    aoas_opt = np.load('../data/project_data/aoas_opt_train.npy').astype(np.float32).reshape(-1, 1)
     mean_std = (inp_paras.mean(0), inp_paras.std(0))
 
-    val_airfoils_opt = np.load('../data/project_data/val/airfoils_opt_val.npy').astype(np.float32)
-    val_inp_paras = np.load('../data/project_data/val/inp_paras_val.npy').astype(np.float32)
-    val_aoas_opt = np.load('../data/project_data/val/aoas_opt_val.npy').astype(np.float32).reshape(-1, 1)
+    val_airfoils_opt = np.load('../data/project_data/airfoils_opt_val.npy').astype(np.float32)
+    val_inp_paras = np.load('../data/project_data/inp_paras_val.npy').astype(np.float32)
+    val_aoas_opt = np.load('../data/project_data/aoas_opt_val.npy').astype(np.float32).reshape(-1, 1)
     val_mean_std = (val_inp_paras.mean(0), val_inp_paras.std(0))
 
 

@@ -23,9 +23,9 @@ if __name__ == '__main__':
 
     epoch = 5
 
-    inp_paras = np.load('../data/project_data/train/inp_paras_train.npy')
+    inp_paras = np.load('../data/project_data/inp_paras_train.npy')
     mean, std = inp_paras.mean(0), inp_paras.std(0)
-    inp_paras = np.load('../data/project_data/test/inp_paras_test.npy') # reload inp_paras from Jun's test set.
+    inp_paras = np.load('../data/project_data/inp_paras_test.npy') # reload inp_paras from Jun's test set.
     tr_inp_paras = (inp_paras - mean) / std
 
 
@@ -42,8 +42,8 @@ if __name__ == '__main__':
     np.save('../data/pred_cbgan/single/new/airfoils_pred.npy', samples[0])
     np.save('../data/pred_cbgan/single/new/inp_params_pred.npy', params.cpu().detach().numpy())
 
-    test_airfoils = np.load('../data/project_data/test/airfoils_opt_test.npy')
-    test_aoas = np.load('../data/project_data/test/aoas_opt_test.npy')
+    test_airfoils = np.load('../data/project_data/airfoils_opt_test.npy')
+    test_aoas = np.load('../data/project_data/aoas_opt_test.npy')
 
     time = datetime.now().strftime('%b%d_%H-%M-%S')
     tb_dir = os.path.join(save_dir, 'runs')
