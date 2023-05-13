@@ -35,8 +35,8 @@ if __name__ == '__main__':
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
 
     batch = 32
-    epochs = 5
-    save_intvl = 5
+    epochs = 5000
+    save_intvl = 1000
 
     dis_cfg, gen_cfg, cbgan_cfg, cz, noise_type = read_configs('cbgan')
     save_dir = '../saves/final'

@@ -21,7 +21,7 @@ if __name__ == '__main__':
     save_dir = '../saves/final/'
     _, gen_cfg, _, cz, _ = read_configs('cbgan')
 
-    epoch = 5
+    epoch = 5000
 
     inp_paras = np.load('../data/inp_paras_train.npy')
     mean, std = inp_paras.mean(0), inp_paras.std(0)
